@@ -7,6 +7,7 @@ import Pyro4
 # Connect to the P2P server
 p2p_server = Pyro4.Proxy("PYRONAME:p2p_server")
 
+#function to add a file.
 def add_file():
     filename = filedialog.askopenfilename()
     if filename:
@@ -17,6 +18,7 @@ def add_file():
             update_file_list()
 
 def delete_file():
+    
     selected_item = file_list.selection()
     if selected_item:
         filename = file_list.item(selected_item, 'text')
