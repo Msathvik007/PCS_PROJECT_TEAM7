@@ -38,5 +38,6 @@ def start_server():
     print("P2P Server is ready.")
     daemon.requestLoop()
 
+#startup code 
 if __name__ == "__main__":
     start_server()

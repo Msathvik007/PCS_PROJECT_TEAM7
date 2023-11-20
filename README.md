@@ -42,3 +42,16 @@ Our system boosts data availability by replicating data across multiple nodes wi
 Our system features an intuitive and user-friendly interface, providing users with the tools to manage their files, review version histories, configure permissions, and restore specific file versions. 
 
 Our P2P file storage system offers a comprehensive and secure solution for users to store, manage, and retrieve their files within a decentralized network, harnessing the robust Kademlia DHT. The system places a strong emphasis on data integrity, privacy, and effective collaboration, making it a powerful tool for contemporary file management.
+
+After a successful login, the user will have access to the following options:
+
+View a list of all files.
+Create new files.
+Read existing files.
+Write to existing files.
+Delete files.
+Add new users.
+Grant permissions.
+Revoke permissions.
+Create directories.
+Delete directories.

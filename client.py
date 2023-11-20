@@ -7,6 +7,7 @@ import Pyro4
 # Connect to the P2P server
 p2p_server = Pyro4.Proxy("PYRONAME:p2p_server")
 
+#Below are the functions for performing CRUD operations(Create, Read, Update, Delete)
 #function to add a file.
 def add_file():
     filename = filedialog.askopenfilename()
