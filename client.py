@@ -17,6 +17,7 @@ def add_file():
             status_label.config(text=result)
             update_file_list()
 
+#Function to Delete a File from the server
 def delete_file():
     
     selected_item = file_list.selection()
