@@ -44,7 +44,6 @@ def startDistributedCore():
                 dirname = base64.b64decode(dirname)
                 dirname = decrypt(dirname)
                 dirname = dirname.decode("utf-8")
-                print(dirname)
                 # dirname = base64.b64decode(dataset[2]).decode('utf-8')
                 if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user) == False:
                     os.mkdir('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user)
@@ -56,7 +55,6 @@ def startDistributedCore():
                 user = dataset[1]
                 dirname = dataset[2]
                 filename = dataset[3]
-                print(user,dirname,filename)
                 dirname = base64.b64decode(dirname)
                 dirname = decrypt(dirname)
                 dirname = dirname.decode("utf-8")
@@ -74,6 +72,9 @@ def startDistributedCore():
             if request == "deletefile":
                 user = dataset[1]
                 dirname = dataset[2]
+                dirname = base64.b64decode(dirname)
+                dirname = decrypt(dirname)
+                dirname = dirname.decode("utf-8")
                 if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname):
                     if os.path.isdir('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname):
                         shutil.rmtree('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname)
@@ -89,6 +90,12 @@ def startDistributedCore():
                 dirname = dataset[2]
                 filename = dataset[3]
                 encrypt = dataset[4]
+                dirname = base64.b64decode(dirname)
+                dirname = decrypt(dirname)
+                dirname = dirname.decode("utf-8")
+                filename = base64.b64decode(filename)
+                filename = decrypt(filename)
+                filename = filename.decode("utf-8")
                 if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename):
                     f = open('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename, "w")
                     f.write(encrypt)
@@ -104,6 +111,15 @@ def startDistributedCore():
                 dirname = dataset[2]
                 oldname = dataset[3]
                 newname = dataset[4]
+                dirname = base64.b64decode(dirname)
+                dirname = decrypt(dirname)
+                dirname = dirname.decode("utf-8")
+                oldname = base64.b64decode(oldname)
+                oldname = decrypt(oldname)
+                oldname = oldname.decode("utf-8")
+                newname = base64.b64decode(newname)
+                newname = decrypt(newname)
+                newname = newname.decode("utf-8")
                 if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+oldname):
                     os.rename('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+oldname,'C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+newname)
                     conn.send("file rename at server".encode())
@@ -126,6 +142,12 @@ def startDistributedCore():
                 user = dataset[1]
                 dirname = dataset[2]
                 filename = dataset[3]
+                dirname = base64.b64decode(dirname)
+                dirname = decrypt(dirname)
+                dirname = dirname.decode("utf-8")
+                filename = base64.b64decode(filename)
+                filename = decrypt(filename)
+                filename = filename.decode("utf-8")
                 features = []
                 if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename):
                     with open('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename) as f:
