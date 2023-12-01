@@ -1,57 +1,48 @@
 # PCS_PROJECT_TEAM7
-# Introduction
-The goal of this project is to create a reliable and safe peer-to-peer (P2P) file storage system that uses a decentralized network for file management and sharing. We will accomplish this by utilizing the Kademlia. Data integrity, security, and user-friendliness are guaranteed by the system's extensive feature set, which includes version control, access control, data encryption, and auditing.
 
-# Working
+# Introduction:
 
+The Distributed File System (DFS) is a client-server application designed to provide users with a secure and interactive platform for managing files remotely. The system is built with a focus on scalability, efficiency, and data security. Users can perform various file operations, including creating directories, creating and deleting files, reading and writing file content, renaming files, and sharing file access.
 
-**Onboarding and Node Integration:**
+# Features:
 
-When a user joins our network, they become a part of the Kademlia DHT, which forms the foundation of our system. Kademlia assigns a unique identifier (Node ID) to each user based on their user ID. The user's node seamlessly integrates into the network by reaching out to an existing node and contributing to the Kademlia routing table.
+# User Authentication:
+Users can log in with existing credentials or sign up for a new account.
+User registration details are securely stored in a MySQL database.
 
-**Decentralized File Fragmentation and Distribution:**
+# File Operations:
 
-Users can upload files to the system, and these files are fragmented into smaller, cryptographically hashed chunks. Each chunk is distributed across the Kademlia network and stored on nodes based on their Node IDs. Our system implements data replication mechanisms to ensure redundancy, thereby enhancing data resilience and availability.
+1. Create Directories: Users can create directories to organize their files.
+2. Create/Delete Files: Users can create and delete files within the system.
+3. Read/Write File Content: Read and write operations are supported for file contents.
+4. Rename Files: Users can rename files for better organization.
+5. Share Access: File access can be shared with other users with specified access modes (Read/Write).
+6. List Available Files: Users can view the list of available files for efficient management.
 
-**Version Tracking and Management:**
+# Security:
+The system employs Advanced Encryption Standard (AES) for secure data transmission between the client and server.
+User credentials and sensitive data are protected during communication.
+Database Interaction:
 
-Our system employs robust version control to meticulously track changes to files and maintain an extensive history of file versions. When a user makes modifications to a file, our system generates a new version, assigns it a unique timestamp or version number, and securely stores it alongside the file's metadata. This feature empowers users to access and restore specific file versions, fostering data integrity and collaborative work.
+User registration details and file access control information are stored in a MySQL database.
+The database ensures data integrity and provides a reliable storage solution for user-related information.
+Working of the System:
 
-**Fine-Grained Access Control and Permissions:**
+# User Authentication:
+Users log in using their credentials or sign up for a new account.
+Usernames and passwords are validated against the stored records in the MySQL database.
+File Operations:
 
-Users enjoy precise control over file and directory access permissions, allowing them to determine who can read, write, or delete files. Access control lists (ACLs) are diligently maintained for each file or directory, ensuring that only authorized users can access or modify them.
+Users interact with a graphical user interface (GUI) to perform file operations.
+The system communicates with the server over sockets to execute file-related requests.
+Secure AES encryption ensures the confidentiality of data during transmission.
+Database Interaction:
 
-**Data Security and Privacy Measures:**
+User registration details, including usernames, passwords, and contact information, are stored securely.
+File access control details, such as sharing and permission information, are managed in the database.
+List Available Files:
 
-Our system is committed to data privacy and security. File contents and metadata are thoroughly encrypted, limiting access to only authorized users. Secure communication protocols protect data during transit, and robust user authentication mechanisms prevent unauthorized access. Detailed auditing and logging processes closely monitor user activities, enhancing both security and accountability.
+Users can view the list of available files, including those owned by them and files shared with them by other users.
 
-**Efficient Concurrent Write and Read Management:**
-
-To handle concurrent read and write operations effectively, our system enforces mechanisms such as file locking and conflict resolution. In scenarios where multiple users attempt to modify the same file simultaneously, the system identifies conflicts and resolves them using predefined strategies.
-
-**Streamlined File Retrieval:**
-
-When a user requests a specific file, our system leverages the Kademlia DHT to precisely locate the file's chunks based on their Node IDs. The system then retrieves these chunks from their respective nodes, assembles the file, and decrypts it if necessary.
-
-**Enhanced Data Redundancy and Availability:**
-
-Our system boosts data availability by replicating data across multiple nodes within the Kademlia network. This strategic redundancy minimizes data loss in cases of node failures, thereby fortifying data availability and fault tolerance.
-
-**User-Centric Interface:**
-
-Our system features an intuitive and user-friendly interface, providing users with the tools to manage their files, review version histories, configure permissions, and restore specific file versions. 
-
-Our P2P file storage system offers a comprehensive and secure solution for users to store, manage, and retrieve their files within a decentralized network, harnessing the robust Kademlia DHT. The system places a strong emphasis on data integrity, privacy, and effective collaboration, making it a powerful tool for contemporary file management.
-
-After a successful login, the user will have access to the following options:
-
-View a list of all files.
-Create new files.
-Read existing files.
-Write to existing files.
-Delete files.
-Add new users.
-Grant permissions.
-Revoke permissions.
-Create directories.
-Delete directories.
+# Conclusion:
+The Distributed File System offers a robust and secure solution for users to manage files efficiently in a distributed environment. It combines user-friendly features with data security, making it an ideal choice for users requiring remote file management capabilities. The integration of a MySQL database ensures reliable storage and retrieval of user and access control details. The system's use of AES encryption guarantees the confidentiality and integrity of data during communication.
