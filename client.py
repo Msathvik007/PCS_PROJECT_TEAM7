@@ -54,11 +54,83 @@ def write_file():
 
 # To Create a new Directory
 def create_directory():
-    pass
+    global username, text
+    global dirname
+    dirname = simpledialog.askstring(title="Please enter directory name", prompt="Please enter directory name")
+    dirname = encrypt(dirname)
+    dirname = str(base64.b64encode(dirname),'utf-8')
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    client.connect(('localhost', 2778))
+    features = []
+    features.append("createdir")
+    features.append(username)
+    features.append(dirname)
+    features = pickle.dumps(features)
+    client.send(features)
+    data = client.recv(100)
+    data = data.decode()
+
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    client.connect(('localhost', 2224))
+    client.send(features)
+    data = client.recv(100)
+    data = data.decode()
+    text.insert(END,data+"\n")
+
+# To Upload a File
+def upload_file():
+    
+    dest_path = "C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/Uploads"
+    file_path = filedialog.askopenfilename()
+    try:
+        shutil.copy(file_path, dest_path)
+        print("File uploaded successfully!")
+        data = "File uploaded successfully"
+    except Exception as e:
+        print(f"Error uploading file: {e}")
+        data = f"Error uploading file: {e}"
+    text.insert(END,data+"\n")
 
 # To Create a new File
 def create_file():
-    pass
+    global username, text
+    global dirname
+    dirname = simpledialog.askstring(title="Please enter directory name", prompt="Please enter directory name")
+    filename = simpledialog.askstring(title="Please enter file name", prompt="Please enter file name")
+    dirname = encrypt(dirname)
+    dirname = str(base64.b64encode(dirname),'utf-8')
+    filename = encrypt(filename)
+    filename = str(base64.b64encode(filename),'utf-8')
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    client.connect(('localhost', 2778))
+    features = []
+    features.append("createfile")
+    features.append(username)
+    features.append(dirname)
+    features.append(filename)
+    features = pickle.dumps(features)
+    client.send(features)
+    data = client.recv(100)
+    data = data.decode()
+    dirname = base64.b64decode(dirname)
+    dirname = decrypt(dirname)
+    dirname = dirname.decode("utf-8")
+    filename = base64.b64decode(filename)
+    filename = decrypt(filename)
+    filename = filename.decode("utf-8")
+    if data!='file does not exists':
+        connection = pymysql.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
+        cur = connection.cursor()
+        student_sql_query = "INSERT INTO all_files(owner,file) VALUES('"+username+"','"+path+username+"/"+dirname+"/"+filename+"')"
+        cur.execute(student_sql_query)
+        connection.commit()
+        available_files.append(path+username+"/"+dirname+"/"+filename)
+        filecombo['values'] = available_files
+
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    client.connect(('localhost', 2224))
+    client.send(features)
+    text.insert(END,data+"\n")
 
 # To Restore File
 def recycle():
@@ -142,6 +214,10 @@ def file_system():
     cf_button = tk.Button(filesystem, text="Create File", command=create_file)
     cf_button.place(x=300, y=100)
     cf_button.config(font=font1)
+
+    cfButton = Button(fs, text="Upload File", command=upload_file)
+    cfButton.place(x=500,y=100)
+    cfButton.config(font=font1)
 
     filecombo = ttk.Combobox(filesystem, values=available_files)
     filecombo.place(x=50, y=150)
