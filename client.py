@@ -157,7 +157,52 @@ def create_file():
 
 # To Restore File
 def recycle():
-    pass
+    global username, text, accessList
+    global dirname
+    dirname = simpledialog.askstring(title="Please enter dirname to restore", prompt="Enter dirname")
+    a=dirname
+    restore_file = simpledialog.askstring(title="Please enter filename to restore", prompt="Enter filename to restore")
+    b=restore_file
+    restore_path = path+username+"/"+dirname+"/"+restore_file
+    orig_path='C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/Recycle/'+restore_file
+    try:
+        shutil.move(orig_path, restore_path)
+        print(f"File moved successfully from {orig_path} to {restore_path}")
+    except Exception as e:
+        print(f"Error: {e}")
+    dirname = encrypt(dirname)
+    dirname = str(base64.b64encode(dirname),'utf-8')
+    filename = encrypt(restore_file)
+    filename = str(base64.b64encode(filename),'utf-8')
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    client.connect(('localhost', 2778))
+    features = []
+    features.append("recycle")
+    features.append(username)
+    features.append(dirname)
+    features.append(filename)
+    features = pickle.dumps(features)
+    client.send(features)
+    data = client.recv(100)
+    data = data.decode()
+    available_files.append(restore_path) 
+    db_con = pymysql.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
+    db_cursor = db_con.cursor()
+    query = "INSERT INTO all_files(owner,file) VALUES('"+username+"','"+path+username+"/"+a+"/"+b+"')"
+    db_cursor.execute(query)
+    db_con.commit()
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    client.connect(('localhost', 2224))
+    features = []
+    features.append("recycle")
+    features.append(username)
+    features.append(dirname)
+    features.append(filename)
+    features = pickle.dumps(features)
+    client.send(features)
+    data = client.recv(100)
+    data = data.decode()
+    text.insert(END,data+"\n")
 # TO Read the File.
 def read_files():
     pass
