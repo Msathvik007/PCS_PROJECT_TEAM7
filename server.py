@@ -105,6 +105,18 @@ def startDistributedCore():
                 else:
                     conn.send("file does not exists".encode())                
                     print("file does nots exists: "+filename)
+            if request == 'recycle':
+                user = dataset[1]
+                dirname = dataset[2]
+                dirname = base64.b64decode(dirname)
+                dirname = decrypt(dirname)
+                dirname = dirname.decode("utf-8")
+                filename = dataset[3]
+                filename = base64.b64decode(filename)
+                filename = decrypt(filename)
+                filename = filename.decode("utf-8")
+
+                conn.send("File restored".encode())
 
             if request == "renamefile":
                 user = dataset[1]
