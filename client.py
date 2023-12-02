@@ -2,6 +2,7 @@ import os
 import tkinter
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import simpledialog
 from tkinter import ttk
 from tkinter import messagebox
 import Pyro4
@@ -305,7 +306,7 @@ def signup_Action():
                     break
             if output == "none":
                 # No need to create a separate connection and cursor again
-                student_sql_query = f"INSERT INTO register(username, password, contact) VALUES('{usr}', '{password}', '{contactno}')"
+                student_sql_query = f"INSERT INTO register(username, password, contact) VALUES('{user}', '{password}', '{contact_number}')"
                 cur.execute(student_sql_query)
                 con.commit()
 
@@ -363,6 +364,7 @@ def login_Function():
     winlogin.mainloop()
 
 def validate_login():
+    True
 
 
 font1 = ('times', 12, 'bold')
