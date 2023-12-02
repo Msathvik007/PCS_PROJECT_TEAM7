@@ -7,8 +7,13 @@ from tkinter import ttk
 from tkinter import messagebox
 import Pyro4
 import pymysql
+import pyaes, pbkdf2
 from tkinter import Label, Entry, Button
 import hashlib
+import socket
+import pickle
+import base64
+
 
 # Connect to the P2P server
 p2p_server = Pyro4.Proxy("PYRONAME:p2p_server")
@@ -17,6 +22,23 @@ main = tkinter.Tk()
 main.title("Distributed File System") 
 main.maxsize(width=500 ,  height=300)
 main.minsize(width=500 ,  height=300)
+
+def getKey(): #generating key with PBKDF2 for AES
+    password = "s3cr3t*c0d3"
+    passwordSalt = '76895'
+    key = pbkdf2.PBKDF2(password, passwordSalt).read(32)
+    return key
+
+def encrypt(plaintext): #AES data encryption
+    aes = pyaes.AESModeOfOperationCTR(getKey(), pyaes.Counter(31129547035000047302952433967654195398124239844566322884172163637846056248223))
+    ciphertext = aes.encrypt(plaintext)
+
+    return ciphertext
+
+def decrypt(enc): #AES data decryption
+    aes = pyaes.AESModeOfOperationCTR(getKey(), pyaes.Counter(31129547035000047302952433967654195398124239844566322884172163637846056248223))
+    decrypted = aes.decrypt(enc)
+    return decrypted
 
 #Below are the functions for performing CRUD operations(Create, Read, Update, Delete)
 #function to add a file.
@@ -216,7 +238,7 @@ def file_system():
     cf_button.place(x=300, y=100)
     cf_button.config(font=font1)
 
-    cfButton = Button(fs, text="Upload File", command=upload_file)
+    cfButton = Button(filesystem, text="Upload File", command=upload_file)
     cfButton.place(x=500,y=100)
     cfButton.config(font=font1)
 
@@ -268,16 +290,6 @@ def file_system():
 global login_user, login_pass, username, available_files
 available_files = []
 
-# Your existing code for creating the login window
-# ...
-
-# Example of creating a login button
-login_button = Button(winlogin, text="Submit", command=validate_login)
-login_button.place(x=100, y=180)
-login_button.config(font=font1)
-
-# Your existing code for running the Tkinter main loop
-winlogin.mainloop()
 
 def signup_Action():
     global sign_user, sign_password, contact, username, count, winsignup
