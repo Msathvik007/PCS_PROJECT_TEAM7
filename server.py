@@ -60,7 +60,29 @@ def handle_client_request(client_socket, client_address):
                 print("File Created: ", file_path)
 
         elif request == "deletefile":
-            pass
+            user = dataset[1]
+            encoded_dirname = dataset[2]
+            encoded_filename = dataset[3]
+
+            # Decode and decrypt directory and file names
+            dirname = decrypt_data(base64.b64decode(encoded_dirname))
+            filename = decrypt_data(base64.b64decode(encoded_filename))
+
+            # Construct the file path
+            file_path = os.path.join(SERVER_ROOT_PATH, user, dirname, filename)
+
+            # Check if the path exists and determine whether it's a file or directory
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)  # Remove directory and all its contents
+                client_socket.sendall("Directory deleted".encode())
+                print(f"Directory deleted: {file_path}")
+            elif os.path.isfile(file_path):
+                os.remove(file_path)  # Remove file
+                client_socket.sendall("File deleted".encode())
+                print(f"File deleted: {file_path}")
+            else:
+                client_socket.sendall("File deleted succesfully".encode())
+                print(f"File deleted successfully")
 
         elif request == "writefile":
             pass
