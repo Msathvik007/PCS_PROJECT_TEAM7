@@ -85,7 +85,28 @@ def handle_client_request(client_socket, client_address):
                 print(f"File deleted successfully")
 
         elif request == "writefile":
-            pass
+    
+            user = dataset[1]
+            encoded_dirname = dataset[2]
+            encoded_filename = dataset[3]
+            file_content = dataset[4]  # Assuming this is already the decrypted content to write
+
+            # Decode and decrypt directory and file names
+            dirname = decrypt_data(base64.b64decode(encoded_dirname))
+            filename = decrypt_data(base64.b64decode(encoded_filename))
+
+            # Construct the file path
+            file_path = os.path.join(SERVER_ROOT_PATH, user, dirname, filename)
+
+            # Check if the path exists and write to the file
+            if os.path.exists(file_path):
+                with open(file_path, "w") as file:
+                    file.write(file_content)
+                client_socket.sendall("File data saved at server".encode())
+                print(f"File data saved at server: {filename}")
+            else:
+                client_socket.sendall("File does not exist".encode())
+                print(f"File does not exist: {filename}")
 
         elif request == "recycle":
             pass
