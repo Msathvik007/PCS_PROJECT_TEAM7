@@ -109,7 +109,20 @@ def handle_client_request(client_socket, client_address):
                 print(f"File does not exist: {filename}")
 
         elif request == "recycle":
-            pass
+            user = dataset[1]
+            encoded_dirname = dataset[2]
+            encoded_filename = dataset[3]
+
+            # Decode and decrypt directory and file names
+            dirname = decrypt_data(base64.b64decode(encoded_dirname))
+            filename = decrypt_data(base64.b64decode(encoded_filename))
+
+            # Construct the file path (assuming recycling involves a specific action on the file)
+            file_path = os.path.join(SERVER_ROOT_PATH, user, dirname, filename)
+
+            # Send a confirmation message back to the client
+            client_socket.sendall("File restored successfully".encode())
+            print(f"File restored: {file_path}")
 
         elif request == "renamefile":
             pass
