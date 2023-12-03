@@ -126,7 +126,29 @@ def handle_client_request(client_socket, client_address):
 
 
         elif request == "readfile":
-            pass
+            user = dataset[1]
+            encoded_dirname = dataset[2]
+            encoded_filename = dataset[3]
+            # Decode and decrypt directory and file names
+            dirname = decrypt_data(base64.b64decode(encoded_dirname))
+            filename = decrypt_data(base64.b64decode(encoded_filename))
+            # Construct the file path
+            file_path = os.path.join(SERVER_ROOT_PATH, user, dirname, filename)
+            # Check if the file exists and read its contents
+            response = []
+            if os.path.exists(file_path):
+                with open(file_path, 'r') as file:
+                    data = file.read()
+                response.append("correct")
+                response.append(data)
+                print(f"File sent to server: {filename}")
+            else:
+                response.append("incorrect")
+                print(f"File does not exist: {file_path}")
+
+            # Send the response to the client
+            response_data = pickle.dumps(response)
+            client_socket.sendall(response_data)
 
     client_socket.close()
 
