@@ -48,7 +48,16 @@ def handle_client_request(client_socket, client_address):
             print(f"Directory Created: {dirname}")
 
         elif request == "createfile":
-            pass
+            filename = decrypt_data(base64.b64decode(dataset[3]))
+            file_path = os.path.join(dir_path, filename)
+            if not os.path.exists(dir_path):
+                client_socket.sendall("Given path does not exists".encode())
+                print("Given path does not exists: ", file_path)
+            else:
+                with open(file_path, 'w') as file:
+                    file.close()
+                client_socket.sendall("File Created".encode())
+                print("File Created: ", file_path)
 
         elif request == "deletefile":
             pass
