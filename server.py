@@ -43,7 +43,9 @@ def handle_client_request(client_socket, client_address):
         dir_path = os.path.join(user_dir_path, dirname)
 
         if request == "createdir":
-            pass
+            os.makedirs(dir_path, exist_ok=True)
+            client_socket.sendall("Directory Created".encode())
+            print(f"Directory Created: {dirname}")
 
         elif request == "createfile":
             pass
