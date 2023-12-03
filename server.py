@@ -1,200 +1,91 @@
-
-import socket 
-from threading import Thread 
-from socketserver import ThreadingMixIn
+####### SERVER1 CODE#########
+import socket
+import threading
 import os
 import base64
 import pickle
 import shutil
-import pyaes, pbkdf2
-import cryptography
-import base64
+from pyaes import AESModeOfOperationCTR, Counter
+from pbkdf2 import PBKDF2
 
+# Server's file system root path
+SERVER_ROOT_PATH = 'C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'
 
+# Cryptography settings
+AES_PASSWORD = "s3cr3t*c0d3"
+AES_PASSWORD_SALT = '76895'
 
-running = True
+def get_aes_key():
+    """Generate and return an AES key derived from a password and salt."""
+    return PBKDF2(AES_PASSWORD, AES_PASSWORD_SALT).read(32)
 
-def getKey(): #generating key with PBKDF2 for AES
-    password = "s3cr3t*c0d3"
-    passwordSalt = '76895'
-    key = pbkdf2.PBKDF2(password, passwordSalt).read(32)
-    return key
+def decrypt_data(encrypted_data):
+    """Decrypt and return the given data using AES."""
+    aes = AESModeOfOperationCTR(get_aes_key(), Counter(31129547035000047302952433967654195398124239844566322884172163637846056248223))
+    return aes.decrypt(encrypted_data).decode('utf-8')
 
-def decrypt(enc): #AES data decryption
-    aes = pyaes.AESModeOfOperationCTR(getKey(), pyaes.Counter(31129547035000047302952433967654195398124239844566322884172163637846056248223))
-    decrypted = aes.decrypt(enc)
-    return decrypted
+def handle_client_request(client_socket, client_address):
+    """Handle requests from a connected client."""
+    print(f'Request received from {client_address}')
+    while True:
+        data = client_socket.recv(100000)
+        if not data:
+            break  
 
-def startDistributedCore():
-    class CoreThread(Thread): 
- 
-        def __init__(self,ip,port): 
-            Thread.__init__(self) 
-            self.ip = ip 
-            self.port = port 
-            print('Request received from Client IP : '+ip+' with port no : '+str(port)+"\n") 
- 
-        def run(self): 
-            data = conn.recv(100000)
-            dataset = pickle.loads(data)
-            request = dataset[0]
-            if request == "createdir":
-                user = dataset[1]
-                dirname = dataset[2]
-                dirname = base64.b64decode(dirname)
-                dirname = decrypt(dirname)
-                dirname = dirname.decode("utf-8")
-                # dirname = base64.b64decode(dataset[2]).decode('utf-8')
-                if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user) == False:
-                    os.mkdir('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user)
-                if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname) == False:
-                    os.mkdir('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname)
-                conn.send("Directory Created".encode())
-                print("Directory Created: "+dirname)
-            if request == "createfile":
-                user = dataset[1]
-                dirname = dataset[2]
-                filename = dataset[3]
-                dirname = base64.b64decode(dirname)
-                dirname = decrypt(dirname)
-                dirname = dirname.decode("utf-8")
-                filename = base64.b64decode(filename)
-                filename = decrypt(filename)
-                filename = filename.decode("utf-8")
-                print(dirname,filename)
-                if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname):
-                    open('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename, 'w').close()
-                    conn.send("File Created".encode())
-                    print("File Created: "+filename)
-                else:
-                    conn.send("Given path does not exists".encode())
-                    print("Given path does not exists: "+filename)
-            if request == "deletefile":
-                user = dataset[1]
-                dirname = dataset[2]
-                dirname = base64.b64decode(dirname)
-                dirname = decrypt(dirname)
-                dirname = dirname.decode("utf-8")
-                if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname):
-                    if os.path.isdir('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname):
-                        shutil.rmtree('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname)
-                    if os.path.isfile('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname):    
-                        os.remove('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname)
-                    conn.send("Given file deleted".encode())
-                    print("Given file deleted: "+dirname)
-                else:
-                    conn.send("file does not exists".encode())
-                    print("file does not exists: "+dirname)
-            if request == "writefile":
-                user = dataset[1]
-                dirname = dataset[2]
-                filename = dataset[3]
-                encrypt = dataset[4]
-                dirname = base64.b64decode(dirname)
-                dirname = decrypt(dirname)
-                dirname = dirname.decode("utf-8")
-                filename = base64.b64decode(filename)
-                filename = decrypt(filename)
-                filename = filename.decode("utf-8")
-                if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename):
-                    f = open('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename, "w")
-                    f.write(encrypt)
-                    f.close()
-                    conn.send("file data saved at server".encode())
-                    print("file data saved at server: "+filename)
-                else:
-                    conn.send("file does not exists".encode())                
-                    print("file does nots exists: "+filename)
-            if request == 'recycle':
-                user = dataset[1]
-                dirname = dataset[2]
-                dirname = base64.b64decode(dirname)
-                dirname = decrypt(dirname)
-                dirname = dirname.decode("utf-8")
-                filename = dataset[3]
-                filename = base64.b64decode(filename)
-                filename = decrypt(filename)
-                filename = filename.decode("utf-8")
+        # Unpack the data
+        dataset = pickle.loads(data)
+        request = dataset[0]
+        user = dataset[1]
+        dirname = decrypt_data(base64.b64decode(dataset[2]))
 
-                conn.send("File restored".encode())
+        # Process the request
+        user_dir_path = os.path.join(SERVER_ROOT_PATH, user)
+        dir_path = os.path.join(user_dir_path, dirname)
 
-            if request == "renamefile":
-                user = dataset[1]
-                dirname = dataset[2]
-                oldname = dataset[3]
-                newname = dataset[4]
-                dirname = base64.b64decode(dirname)
-                dirname = decrypt(dirname)
-                dirname = dirname.decode("utf-8")
-                oldname = base64.b64decode(oldname)
-                oldname = decrypt(oldname)
-                oldname = oldname.decode("utf-8")
-                newname = base64.b64decode(newname)
-                newname = decrypt(newname)
-                newname = newname.decode("utf-8")
-                if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+oldname):
-                    os.rename('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+oldname,'C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+newname)
-                    conn.send("file rename at server".encode())
-                    print("file rename at server: "+newname)
-                else:
-                    conn.send("file does not exists".encode())
-                    print("file does not exists")
+        if request == "createdir":
+            pass
 
-            if request == "listfiles":
-                user = dataset[1]
-                file_list = []
-                for root, dirs, directory in os.walk('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user):
-                    for j in range(len(directory)):
-                        file_list.append(root+"/"+directory[j])
-                file_list = pickle.dumps(file_list)
-                conn.send(file_list)
-                print("file list sent to user")        
-                        
-            if request == "readfile":
-                user = dataset[1]
-                dirname = dataset[2]
-                filename = dataset[3]
-                dirname = base64.b64decode(dirname)
-                dirname = decrypt(dirname)
-                dirname = dirname.decode("utf-8")
-                filename = base64.b64decode(filename)
-                filename = decrypt(filename)
-                filename = filename.decode("utf-8")
-                features = []
-                if os.path.exists('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename):
-                    with open('C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'+user+"/"+dirname+"/"+filename) as f:
-                        data = f.read()
-                    f.close()
-                    features.append("correct")
-                    features.append(data)
-                    features = pickle.dumps(features)
-                    conn.send(features)
-                    print("file sent to server: "+filename)
-                else:
-                    features.append("incorrect")
-                    features = pickle.dumps(features)
-                    conn.send(features)
-                    print("file does not exists")    
-                
-            
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
-    server.bind(('localhost', 2778))
-    threads = []
-    print("Distributed File System Started\n\n")
-    while running:
-        server.listen(4)
-        (conn, (ip,port)) = server.accept()
-        newthread = CoreThread(ip,port) 
-        newthread.start() 
-        threads.append(newthread) 
-    for t in threads:
-        t.join()
+        elif request == "createfile":
+            pass
 
-def startCore():
-    Thread(target=startDistributedCore).start()
+        elif request == "deletefile":
+            pass
 
+        elif request == "writefile":
+            pass
 
-startCore()
+        elif request == "recycle":
+            pass
 
+        elif request == "renamefile":
+            pass
 
+        elif request == "listfiles":
+            pass
+
+        elif request == "readfile":
+            pass
+
+    client_socket.close()
+
+def start_server():
+    """Start the server and listen for incoming client connections."""
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind(('localhost', 2778))
+    server_socket.listen(4)
+    print("Server started. Waiting for connections...")
+
+    try:
+        while True:
+            client_socket, client_address = server_socket.accept()
+            client_thread = threading.Thread(target=handle_client_request, args=(client_socket, client_address))
+            client_thread.daemon = True
+            client_thread.start()
+    except KeyboardInterrupt:
+        print("\nServer shutting down.")
+    finally:
+        server_socket.close()
+
+#calling the start_server() function
+start_server()
