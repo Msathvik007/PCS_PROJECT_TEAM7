@@ -124,11 +124,6 @@ def handle_client_request(client_socket, client_address):
             client_socket.sendall("File restored successfully".encode())
             print(f"File restored: {file_path}")
 
-        elif request == "renamefile":
-            pass
-
-        elif request == "listfiles":
-            pass
 
         elif request == "readfile":
             pass
