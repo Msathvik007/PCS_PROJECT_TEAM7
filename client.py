@@ -200,7 +200,58 @@ def removeFileFromServer():
         record_file_delete(active_user, file_name, user_permission)
 
 def editFileContent():
-    pass
+    global active_user, display_text
+    global directory_name
+    directory_name = file_selection.get()
+    path_parts = directory_name.split("/")
+    owner_name = path_parts[6]
+    directory_name = path_parts[7]
+    file_name = path_parts[8]
+    directory_name = encrypt_data(directory_name)
+    directory_name = str(base64_lib.b64encode(directory_name), 'utf-8')
+    write_access_granted = False
+    no_permission = 'None'
+    write_permission = 'Write'
+    if owner_name != active_user:
+        db_connection = db_connector.connect(host='127.0.0.1', port=3306, user='root', password='Sathvik@007', database='distributed', charset='utf8')
+        with db_connection:
+            db_cursor = db_connection.cursor()
+            db_cursor.execute("SELECT access_mode FROM access WHERE user=%s AND filename=%s", (active_user, file_selection.get()))
+            access_modes = db_cursor.fetchall()
+            for access_mode in access_modes:
+                if access_mode[0] == write_permission:
+                    write_access_granted = True
+    user_permission = 'unauthorized'
+    if owner_name == active_user or write_access_granted:
+        user_permission = 'authorized'
+        record_file_write(active_user, file_name, user_permission)
+        file_name = encrypt_data(file_name)
+        file_name = str(base64_lib.b64encode(file_name), 'utf-8')
+
+        file_content = tk_simpledialog.askstring(title="Enter File Content", prompt="Enter File Content")
+        file_content = encrypt_data(file_content)
+        file_content = str(base64_lib.b64encode(file_content), 'utf-8')
+        server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+        server_socket.connect(('localhost', 2778))
+        file_details = []
+        file_details.append("writefile")
+        file_details.append(owner_name)
+        file_details.append(directory_name)
+        file_details.append(file_name)
+        file_details.append(file_content)
+        file_details = data_pickle.dumps(file_details)
+        server_socket.send(file_details)
+        response = server_socket.recv(100)
+        response = response.decode()
+        display_text.insert(END, response + "\n")
+
+        server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+        server_socket.connect(('localhost', 2227))
+        file_details = data_pickle.dumps(file_details)
+        server_socket.send(file_details)
+    else:
+        tk_messagebox.showinfo("No Permission to Edit File", active_user + " does not have permission to edit file " + owner_name)
+        record_file_write(active_user, file_name, user_permission)
 
 def restoreFileFromRecycleBin():
     pass
