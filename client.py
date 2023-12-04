@@ -101,7 +101,44 @@ def uploadFileToServer():
     display_text.insert(END, upload_response + "\n")
 
 def generateNewFile():
-    
+    global active_user, display_text
+    global directory_name
+    directory_name = tk_simpledialog.askstring(title="Enter Directory Name", prompt="Enter Directory Name")
+    file_name = tk_simpledialog.askstring(title="Enter File Name", prompt="Enter File Name")
+    directory_name = encrypt_data(directory_name)
+    directory_name = str(base64_lib.b64encode(directory_name), 'utf-8')
+    file_name = encrypt_data(file_name)
+    file_name = str(base64_lib.b64encode(file_name), 'utf-8')
+    server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+    server_socket.connect(('localhost', 2778))
+    file_details = []
+    file_details.append("createfile")
+    file_details.append(active_user)
+    file_details.append(directory_name)
+    file_details.append(file_name)
+    file_details = data_pickle.dumps(file_details)
+    server_socket.send(file_details)
+    response = server_socket.recv(100)
+    response = response.decode()
+    directory_name = base64_lib.b64decode(directory_name)
+    directory_name = decrypt_data(directory_name)
+    directory_name = directory_name.decode("utf-8")
+    file_name = base64_lib.b64decode(file_name)
+    file_name = decrypt_data(file_name)
+    file_name = file_name.decode("utf-8")
+    if response != 'file does not exist':
+        db_connection = db_connector.connect(host='127.0.0.1', port=3306, user='root', password='Sathvik@007', database='distributed', charset='utf8')
+        db_cursor = db_connection.cursor()
+        file_insert_query = "INSERT INTO all_files(owner, file) VALUES('" + active_user + "','" + main_path + active_user + "/" + directory_name + "/" + file_name + "')"
+        db_cursor.execute(file_insert_query)
+        db_connection.commit()
+        file_library.append(main_path + active_user + "/" + directory_name + "/" + file_name)
+        file_selection['values'] = file_library
+
+    server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+    server_socket.connect(('localhost', 2227))
+    server_socket.send(file_details)
+    display_text.insert(END, response + "\n")
     
 def removeFileFromServer():
      global active_user, display_text
