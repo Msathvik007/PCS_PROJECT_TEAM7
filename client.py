@@ -65,17 +65,102 @@ def decrypt_data(encrypted_data):  # AES data decryption
     return decrypted_data
 
 def initiateDirectoryCreation():
-   pass
+   global active_user, display_text
+    global directory_name
+    directory_name = tk_simpledialog.askstring(title="Enter Directory Name", prompt="Enter Directory Name")
+    directory_name = encrypt_data(directory_name)
+    directory_name = str(base64_lib.b64encode(directory_name), 'utf-8')
+    server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+    server_socket.connect(('localhost', 2778))
+    directory_info = []
+    directory_info.append("createdir")
+    directory_info.append(active_user)
+    directory_info.append(directory_name)
+    directory_info = data_pickle.dumps(directory_info)
+    server_socket.send(directory_info)
+    response = server_socket.recv(100)
+    response = response.decode()
+
+    server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+    server_socket.connect(('localhost', 2227))
+    server_socket.send(directory_info)
+    response = server_socket.recv(100)
+    response = response.decode()
+    display_text.insert(END, response + "\n")
 
 def uploadFileToServer():
-    pass
+    target_directory = "C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/Uploads"
+    selected_file_path = tk_filedialog.askopenfilename()
+    try:
+        file_shutil.copy(selected_file_path, target_directory)
+        print("File successfully uploaded!")
+        upload_response = "File successfully uploaded"
+    except Exception as upload_error:
+        print(f"Error uploading file: {upload_error}")
+        upload_response = f"Error uploading file: {upload_error}"
+    display_text.insert(END, upload_response + "\n")
 
 def generateNewFile():
-    pass
+    
     
 def removeFileFromServer():
-    pass
-    
+     global active_user, display_text
+    global directory_name
+    directory_name = file_selection.get()
+    original_file_path = directory_name
+    path_elements = directory_name.split("/")
+    file_owner = path_elements[6]
+    directory_name = path_elements[7]
+    file_name = path_elements[8]
+    directory_name = encrypt_data(directory_name)
+    directory_name = str(base64_lib.b64encode(directory_name), 'utf-8')
+    deletion_allowed = False
+    no_access = 'None'
+    delete_access = 'Delete'
+    if file_owner != active_user:
+        db_connection = db_connector.connect(host='127.0.0.1', port=3306, user='root', password='Sathvik@007', database='distributed', charset='utf8')
+        with db_connection:
+            db_cursor = db_connection.cursor()
+            db_cursor.execute("SELECT access_mode FROM access WHERE user=%s AND filename=%s", (active_user, file_selection.get()))
+            access_rows = db_cursor.fetchall()
+            for access_row in access_rows:
+                if access_row[0] == delete_access:
+                    deletion_allowed = True
+    user_permission = 'unauthorized'
+    if file_owner == active_user or deletion_allowed:
+        user_permission = 'authorized'
+        record_file_delete(active_user, file_name, user_permission)
+        backup_path = 'C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/Recycle/' + file_name
+        try:
+            file_shutil.move(original_file_path, backup_path)
+            print(f"Successfully moved file from {original_file_path} to {backup_path}")
+        except Exception as move_error:
+            print(f"Error: {move_error}")
+        file_name = encrypt_data(file_name)
+        file_name = str(base64_lib.b64encode(file_name), 'utf-8')
+        server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+        server_socket.connect(('localhost', 2778))
+        file_info = []
+        file_info.append("deletefile")
+        file_info.append(file_owner)
+        file_info.append(directory_name)
+        file_info.append(file_name)
+        file_info = data_pickle.dumps(file_info)
+        server_socket.send(file_info)
+        response = server_socket.recv(100)
+        response = response.decode()
+        display_text.insert(END, response + "\n")
+        if original_file_path in file_library:
+            print("Me")
+            file_library.remove(original_file_path)
+        db_connection = db_connector.connect(host='127.0.0.1', port=3306, user='root', password='Sathvik@007', database='distributed', charset='utf8')
+        db_cursor = db_connection.cursor()
+        delete_query = "DELETE FROM all_files WHERE file=%s"
+        db_cursor.execute(delete_query, original_file_path)
+        db_connection.commit()
+    else:
+        tk_messagebox.showinfo("No Permission to Delete File", active_user + " does not have permission to delete file " + file_owner)
+        record_file_delete(active_user, file_name, user_permission)
 
 def editFileContent():
     pass
