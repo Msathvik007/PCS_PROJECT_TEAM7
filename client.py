@@ -296,16 +296,170 @@ def restoreFileFromRecycleBin():
     display_text.insert(END, response + "\n")
     
 def allocateFileAccess():
-    pass
+    global active_user, display_text, permission_options
+    global directory_name
+    directory_name = file_selection.get()
+    directory_name = directory_name.replace("\\", "/")
+    recipient_user = tk_simpledialog.askstring(title="Enter Username to Share File With", prompt="Enter Username to Share File With")
+    selected_access_mode = permission_options.get()
+
+    db_connection = db_connector.connect(host='127.0.0.1', port=3306, user='root', password='Sathvik@007', database='distributed', charset='utf8')
+    db_cursor = db_connection.cursor()
+    access_control_query = "INSERT INTO access(owner, user, filename, access_mode) VALUES(%s, %s, %s, %s)"
+    db_cursor.execute(access_control_query, (active_user, recipient_user, directory_name, selected_access_mode))
+    db_connection.commit()
+    tk_messagebox.showinfo("Access Control Updated", "File access control details updated in database")
     
 def readFile():
-    pass
+    global active_user, display_text
+    global directory_name
+    display_text.delete('1.0', END)
+    directory_name = file_selection.get()
+    directory_name = directory_name.replace("\\", "/")
+    arr = directory_name.split("/")
+    file_owner = arr[6]
+    directory_name = arr[7]
+    file_name = arr[8]
+    directory_name = directory_name
+    file_name = file_name
+    permission_status = False
+    read_permission = "Read"
+    no_permission = 'None'
+
+    if file_owner != active_user:
+        db_connection = db_connector.connect(host='127.0.0.1', port=3306, user='root', password='Sathvik@007', database='distributed', charset='utf8')
+        with db_connection:
+            db_cursor = db_connection.cursor()
+            query = "SELECT access_mode FROM access WHERE user=%s AND filename=%s"
+            db_cursor.execute(query, (active_user, file_selection.get()))
+            result = db_cursor.fetchall()
+            for row in result:
+                if row[0] == read_permission:
+                    permission_status = True
+
+    permission = 'unauthorized'
+    print(file_owner)
+    print(permission_status)
+    if file_owner == active_user or permission_status:
+        permission = 'authorized'
+        record_file_read(active_user, file_name, permission)
+        directory_name = encrypt_data(directory_name)
+        directory_name = str(base64_lib.b64encode(directory_name), 'utf-8')
+        file_name = encrypt_data(file_name)
+        file_name = str(base64_lib.b64encode(file_name), 'utf-8')
+        client = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+        client.connect(('localhost', 2778))
+        features = ["readfile", file_owner, directory_name, file_name]
+        features = data_pickle.dumps(features)
+        client.send(features)
+        received_data = client.recv(10000)
+        dataset = data_pickle.loads(received_data)
+        request = dataset[0]
+        
+        if request == "correct":
+            data = dataset[1]
+            data = base64_lib.b64decode(data)
+            data = decrypt_data(data)
+            data = data.decode("utf-8")
+            display_text.insert(END, "File Content Showing in Below lines\n\n")
+            display_text.insert(END, data)
+        else:
+            display_text.insert(END, "File does not exist\n")
+        
+        client1 = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+        client1.connect(('localhost', 2227))
+        client1.send(features)
+    else:
+        tk_messagebox.showinfo("Permission Denied", f"{active_user}, you don't have permission to read this file owned by {file_owner}")
+        record_file_read(active_user, file_name, permission)
 
 def readFiles():
-    pass
+    global file_library
+    if len(file_library) > 0:
+        file_library.clear()
+    file_library.append("Available Files")
+    con = db_connector.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
+    with con:
+        cur = con.cursor()
+        cur.execute("select file FROM all_files")
+        rows = cur.fetchall()
+        for row in rows:
+            file_library.append(row[0])
 
 def fileManagementSystem():
-    pass
+    global active_user, display_text, file_library, file_selection, permission_options
+
+    # Initialize the main window
+    file_sys_window = tk.Tk()
+    file_sys_window.title("File Management System Interface")
+    file_sys_window.geometry("1300x900")
+    standard_font = tk_font.Font(family='Helvetica', size=12, weight='bold')
+
+    # Create a frame for file operations
+    operation_frame = tk.Frame(file_sys_window, bg='blue', bd=2, relief='groove')
+    operation_frame.place(x=20, y=20, width=1260, height=120)
+
+    # Directory Creation Button
+    createDirButton = Button(operation_frame, text="Create Directory", command=initiateDirectoryCreation, font=standard_font)
+    createDirButton.place(x=10, y=10)
+
+    # File Creation Button
+    createFileButton = Button(operation_frame, text="Create File", command=generateNewFile, font=standard_font)
+    createFileButton.place(x=180, y=10)
+
+    # File Upload Button
+    uploadFileButton = Button(operation_frame, text="Upload File", command=uploadFileToServer, font=standard_font)
+    uploadFileButton.place(x=350, y=10)
+
+    # File Deletion Button
+    deleteFileButton = Button(operation_frame, text="Delete File", command=removeFileFromServer, font=standard_font)
+    deleteFileButton.place(x=520, y=10)
+
+    # File Restore Button
+    restoreFileButton = Button(operation_frame, text="Restore File", command=restoreFileFromRecycleBin, font=standard_font)
+    restoreFileButton.place(x=690, y=10)
+
+    # File Reading Button
+    readFileButton = Button(operation_frame, text="Read File", command=readFile, font=standard_font)
+    readFileButton.place(x=860, y=10)
+
+    # File Writing Button
+    writeFileButton = Button(operation_frame, text="Write File", command=editFileContent, font=standard_font)
+    writeFileButton.place(x=1030, y=10)
+
+    # Access Sharing Button
+    shareAccessButton = Button(operation_frame, text="Share Access", command=allocateFileAccess, font=standard_font)
+    shareAccessButton.place(x=860, y=60)
+
+    # Log Display Button
+    displayLogButton = Button(operation_frame, text="Display Log", command=display_log_entries, font=standard_font)
+    displayLogButton.place(x=180, y=60)
+
+    # File Selection Combobox
+    file_selection = tk_ttk.Combobox(operation_frame, values=file_library, font=standard_font)
+    file_selection.place(x=350, y=65, width=320)
+    if len(file_library) > 0:
+        file_selection.current(0)
+
+    # Access Control Combobox
+    permission_options = tk_ttk.Combobox(operation_frame, values=['Read', 'Write', 'Rename', 'Delete'], font=standard_font)
+    permission_options.place(x=690, y=65, width=150)
+    permission_options.current(0)
+
+    # Text Box for Logs or File Content
+    text_frame = Frame(file_sys_window)
+    text_frame.place(x=20, y=160, width=1260, height=720)
+
+    display_text = Text(text_frame, bg='white', fg='black', font=standard_font)
+    display_text.pack(side='left', fill='both', expand=True)
+
+    scrollbar = Scrollbar(text_frame, command=display_text.yview)
+    scrollbar.pack(side='right', fill='y')
+
+    display_text['yscrollcommand'] = scrollbar.set
+
+    # Mainloop
+    file_sys_window.mainloop()
 
 # Window Icon Photo
 icon = PhotoImage(file='images\\pic-icon.png')
