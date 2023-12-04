@@ -1,462 +1,518 @@
-import os
-import tkinter
+import time as time_lib
+import pymysql as db_connector
+import tkinter.font as tk_font
+from tkinter import messagebox as tk_messagebox
+from tkinter import Tk, END, Scrollbar, Text, Frame, Button, Checkbutton, Label, Canvas, Listbox, Entry, PhotoImage, Toplevel, StringVar
+from tkinter import simpledialog as tk_simpledialog
+from tkinter import filedialog as tk_filedialog
 import tkinter as tk
-from tkinter import filedialog
-from tkinter import simpledialog
-from tkinter import ttk
-from tkinter import messagebox
-import Pyro4
-import pymysql
-import pyaes, pbkdf2
-from tkinter import Label, Entry, Button
-import hashlib
-import socket
-import pickle
-import base64
+from tkinter import ttk as tk_ttk
+import socket as net_socket
+import pickle as data_pickle
+import pyaes
+import pbkdf2 as pbkdf2_lib
+import base64 as base64_lib
+import shutil as file_shutil
+from PIL import ImageTk as pil_imageTk, Image as pil_image
+import logging as logging_lib
 
 
-# Connect to the P2P server
-p2p_server = Pyro4.Proxy("PYRONAME:p2p_server")
+main_interface = Tk()
+main_interface.rowconfigure(0, weight=1)
+main_interface.columnconfigure(0, weight=1)
+main_interface.state('zoomed')
+main_interface.resizable(0, 0)
+main_interface.title('User Authentication Interface')
 
-main = tkinter.Tk()
-main.title("Distributed File System") 
-main.maxsize(width=500 ,  height=300)
-main.minsize(width=500 ,  height=300)
+global auth_username, auth_password, reg_username, reg_password, user_contact, active_username, action_counter, reg_window, login_window, display_text, directory_path, file_selector, permission_selector
+action_counter = 0
+global file_library, main_path
+main_path = 'C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/'
+logging_lib.basicConfig(filename='system_activity.log', level=logging_lib.INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-def getKey(): #generating key with PBKDF2 for AES
-    password = "s3cr3t*c0d3"
-    passwordSalt = '76895'
-    key = pbkdf2.PBKDF2(password, passwordSalt).read(32)
-    return key
+def record_file_read(user_id, file_id, access_level):
+    logging_lib.info('File Read: %s User %s accessed %s', access_level, user_id, file_id)
 
-def encrypt(plaintext): #AES data encryption
-    aes = pyaes.AESModeOfOperationCTR(getKey(), pyaes.Counter(31129547035000047302952433967654195398124239844566322884172163637846056248223))
-    ciphertext = aes.encrypt(plaintext)
+def record_file_write(user_id, file_id, access_level):
+    logging_lib.info('File Write: %s User %s modified %s', access_level, user_id, file_id)
 
-    return ciphertext
+def record_file_delete(user_id, file_id, access_level):
+    logging_lib.info('File Delete: %s User %s removed %s', access_level, user_id, file_id)
 
-def decrypt(enc): #AES data decryption
-    aes = pyaes.AESModeOfOperationCTR(getKey(), pyaes.Counter(31129547035000047302952433967654195398124239844566322884172163637846056248223))
-    decrypted = aes.decrypt(enc)
-    return decrypted
+def display_log_entries():
+    display_text.delete('1.0', 'end')
+    with open('system_activity.log', 'r') as activity_log:
+        log_records = activity_log.readlines()
+    for record in log_records:
+        newline = '\n'
+        display_text.insert(END, record.strip())
+        display_text.insert(END, newline)
 
-#Below are the functions for performing CRUD operations(Create, Read, Update, Delete)
-#function to add a file.
-def add_file():
-    filename = filedialog.askopenfilename()
-    if filename:
-        with open(filename, 'rb') as file:
-            content = file.read()
-            result = p2p_server.add_file(os.path.basename(filename), content)
-            status_label.config(text=result)
-            update_file_list()
+def generate_encryption_key():  # Generating key with PBKDF2 for AES
+    secret_key = "mySecretKey123"
+    key_salt = '123456'
+    encryption_key = pbkdf2_lib.PBKDF2(secret_key, key_salt).read(32)
+    return encryption_key
 
-#Function to Delete a File from the server
-def delete_file():
+def encrypt_data(data_to_encrypt):  # AES data encryption
+    aes_encryptor = pyaes.AESModeOfOperationCTR(generate_encryption_key(), pyaes.Counter(31129547035000047302952433967654195398124239844566322884172163637846056248223))
+    encrypted_data = aes_encryptor.encrypt(data_to_encrypt)
+    return encrypted_data
+
+def decrypt_data(encrypted_data):  # AES data decryption
+    aes_decryptor = pyaes.AESModeOfOperationCTR(generate_encryption_key(), pyaes.Counter(31129547035000047302952433967654195398124239844566322884172163637846056248223))
+    decrypted_data = aes_decryptor.decrypt(encrypted_data)
+    return decrypted_data
+
+def initiateDirectoryCreation():
+   pass
+
+def uploadFileToServer():
+    pass
+
+def generateNewFile():
+    pass
     
-    selected_item = file_list.selection()
-    if selected_item:
-        filename = file_list.item(selected_item, 'text')
-        result = p2p_server.delete_file(filename)
-        status_label.config(text=result)
-        update_file_list()
+def removeFileFromServer():
+    pass
+    
 
-def write_file():
-    selected_item = file_list.selection()
-    if selected_item:
-        filename = file_list.item(selected_item, 'text')
-        content = p2p_server.restore_file(filename)
-        if content:
-            with open(filename, 'wb') as file:
-                file.write(content)
-            status_label.config(text=f"File '{filename}' written to disk.")
-        else:
-            status_label.config(text=f"File '{filename}' not found on the server.")
+def editFileContent():
+    pass
+
+def restoreFileFromRecycleBin():
+    pass
+    
+def allocateFileAccess():
+    pass
+    
+def readFile():
+    pass
+
+def readFiles():
+    pass
+
+def fileManagementSystem():
+    pass
+
+# Window Icon Photo
+icon = PhotoImage(file='images\\pic-icon.png')
+main_interface.iconphoto(True, icon)
+
+LoginPage = Frame(main_interface)
+RegistrationPage = Frame(main_interface)
+
+for frame in (LoginPage, RegistrationPage):
+    frame.grid(row=0, column=0, sticky='nsew')
+
+
+def show_frame(frame):
+    frame.tkraise()
+
+
+show_frame(LoginPage)
+
+
+# ========== DATABASE VARIABLES ============
+Email = StringVar()
+FullName = StringVar()
+Password = StringVar()
+ConfirmPassword = StringVar()
+
+design_frame1 = Listbox(LoginPage, bg='#0c71b9', width=115, height=50, highlightthickness=0, borderwidth=0)
+design_frame1.place(x=0, y=0)
+
+design_frame2 = Listbox(LoginPage, bg='#1e85d0', width=115, height=50, highlightthickness=0, borderwidth=0)
+design_frame2.place(x=676, y=0)
+
+design_frame3 = Listbox(LoginPage, bg='#1e85d0', width=100, height=33, highlightthickness=0, borderwidth=0)
+design_frame3.place(x=75, y=106)
+
+design_frame4 = Listbox(LoginPage, bg='#f8f8f8', width=100, height=33, highlightthickness=0, borderwidth=0)
+design_frame4.place(x=676, y=106)
+
+# ====== Usernme ====================
+email_entry = Entry(design_frame4, fg="#a7a7a7", font=("yu gothic ui semibold", 12), highlightthickness=2,
+                    textvariable=Email)
+email_entry.place(x=134, y=170, width=256, height=34)
+email_entry.config(highlightbackground="black", highlightcolor="black")
+email_label = Label(design_frame4, text='• Username', fg="#89898b", bg='#f8f8f8', font=("yu gothic ui", 11, 'bold'))
+email_label.place(x=130, y=140)
+
+# ==== Password ==================
+password_entry1 = Entry(design_frame4, fg="#a7a7a7", font=("yu gothic ui semibold", 12), show='•', highlightthickness=2,
+                        textvariable=Password)
+password_entry1.place(x=134, y=250, width=256, height=34)
+password_entry1.config(highlightbackground="black", highlightcolor="black")
+password_label = Label(design_frame4, text='• Password', fg="#89898b", bg='#f8f8f8', font=("yu gothic ui", 11, 'bold'))
+password_label.place(x=130, y=220)
+
+
+# function for show and hide password
+def password_command():
+    if password_entry1.cget('show') == '•':
+        password_entry1.config(show='')
     else:
-        status_label.config(text="Select a file to write.")
-
-# To Create a new Directory
-def create_directory():
-    global username, text
-    global dirname
-    dirname = simpledialog.askstring(title="Please enter directory name", prompt="Please enter directory name")
-    dirname = encrypt(dirname)
-    dirname = str(base64.b64encode(dirname),'utf-8')
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    client.connect(('localhost', 2778))
-    features = []
-    features.append("createdir")
-    features.append(username)
-    features.append(dirname)
-    features = pickle.dumps(features)
-    client.send(features)
-    data = client.recv(100)
-    data = data.decode()
-
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    client.connect(('localhost', 2224))
-    client.send(features)
-    data = client.recv(100)
-    data = data.decode()
-    text.insert(END,data+"\n")
-
-# To Upload a File
-def upload_file():
-    
-    dest_path = "C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/Uploads"
-    file_path = filedialog.askopenfilename()
-    try:
-        shutil.copy(file_path, dest_path)
-        print("File uploaded successfully!")
-        data = "File uploaded successfully"
-    except Exception as e:
-        print(f"Error uploading file: {e}")
-        data = f"Error uploading file: {e}"
-    text.insert(END,data+"\n")
-
-# To Create a new File
-def create_file():
-    global username, text
-    global dirname
-    dirname = simpledialog.askstring(title="Please enter directory name", prompt="Please enter directory name")
-    filename = simpledialog.askstring(title="Please enter file name", prompt="Please enter file name")
-    dirname = encrypt(dirname)
-    dirname = str(base64.b64encode(dirname),'utf-8')
-    filename = encrypt(filename)
-    filename = str(base64.b64encode(filename),'utf-8')
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    client.connect(('localhost', 2778))
-    features = []
-    features.append("createfile")
-    features.append(username)
-    features.append(dirname)
-    features.append(filename)
-    features = pickle.dumps(features)
-    client.send(features)
-    data = client.recv(100)
-    data = data.decode()
-    dirname = base64.b64decode(dirname)
-    dirname = decrypt(dirname)
-    dirname = dirname.decode("utf-8")
-    filename = base64.b64decode(filename)
-    filename = decrypt(filename)
-    filename = filename.decode("utf-8")
-    if data!='file does not exists':
-        connection = pymysql.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
-        cur = connection.cursor()
-        student_sql_query = "INSERT INTO all_files(owner,file) VALUES('"+username+"','"+path+username+"/"+dirname+"/"+filename+"')"
-        cur.execute(student_sql_query)
-        connection.commit()
-        available_files.append(path+username+"/"+dirname+"/"+filename)
-        filecombo['values'] = available_files
-
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    client.connect(('localhost', 2224))
-    client.send(features)
-    text.insert(END,data+"\n")
-
-# To Restore File
-def recycle():
-    global username, text, accessList
-    global dirname
-    dirname = simpledialog.askstring(title="Please enter dirname to restore", prompt="Enter dirname")
-    a=dirname
-    restore_file = simpledialog.askstring(title="Please enter filename to restore", prompt="Enter filename to restore")
-    b=restore_file
-    restore_path = path+username+"/"+dirname+"/"+restore_file
-    orig_path='C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/Recycle/'+restore_file
-    try:
-        shutil.move(orig_path, restore_path)
-        print(f"File moved successfully from {orig_path} to {restore_path}")
-    except Exception as e:
-        print(f"Error: {e}")
-    dirname = encrypt(dirname)
-    dirname = str(base64.b64encode(dirname),'utf-8')
-    filename = encrypt(restore_file)
-    filename = str(base64.b64encode(filename),'utf-8')
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    client.connect(('localhost', 2778))
-    features = []
-    features.append("recycle")
-    features.append(username)
-    features.append(dirname)
-    features.append(filename)
-    features = pickle.dumps(features)
-    client.send(features)
-    data = client.recv(100)
-    data = data.decode()
-    available_files.append(restore_path) 
-    db_con = pymysql.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
-    db_cursor = db_con.cursor()
-    query = "INSERT INTO all_files(owner,file) VALUES('"+username+"','"+path+username+"/"+a+"/"+b+"')"
-    db_cursor.execute(query)
-    db_con.commit()
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-    client.connect(('localhost', 2224))
-    features = []
-    features.append("recycle")
-    features.append(username)
-    features.append(dirname)
-    features.append(filename)
-    features = pickle.dumps(features)
-    client.send(features)
-    data = client.recv(100)
-    data = data.decode()
-    text.insert(END,data+"\n")
-# TO Read the File.
-def read_files():
-    pass
-
-def rename_file():
-    pass
-
-def share_access():
-    pass
-
-def update_file_list():
-    file_list.delete(*file_list.get_children())
-    for filename in p2p_server.file_storage.keys():
-        file_list.insert('', 'end', text=filename)
-
-def validate_login():
-    global login_user, login_pass, username, available_files
-
-    user = login_user.get()
-    password = login_pass.get()
-
-    if not user or not password:
-        messagebox.showinfo("Input Error", "Please enter both username and password")
-        return
-    hashed_password = hash_password(password)
-
-    try:
-        con = pymysql.connect(host='127.0.0.1', port=3306, user='root', password='Sathvik@007', database='distributed', charset='utf8')
-    except pymysql.Error as e:
-        messagebox.showerror("Database Error", f"Error connecting to the database: {e}")
-        return
-
-    try:
-        with con:
-            cur = con.cursor()
-            cur.execute("SELECT username, password FROM register")
-            rows = cur.fetchall()
-            for row in rows:
-                if row[0] == user and row[1] == hashed_password:
-                    login_success()
-                    break
-            else:
-                login_failure()
-    except pymysql.Error as e:
-        messagebox.showerror("Database Error", f"Error querying the database: {e}")
-    finally:
-        if con:
-            con.close()
-
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def login_success():
-    global username
-    username = login_user.get()
-    read_files()
-    winlogin.destroy()
-    file_system()
-
-def login_failure():
-    messagebox.showerror("Login Failed", "Invalid username or password. Please retry.")
+        password_entry1.config(show='•')
 
 
-def file_system():
-    # Implement your logic for the file system window here
-    global username, text, available_files, filecombo, accessList
+# ====== checkbutton ==============
+checkButton = Checkbutton(design_frame4, bg='#f8f8f8', command=password_command, text='show password')
+checkButton.place(x=140, y=288)
 
-    filesystem = tk.Tk()
-    filesystem.title("Distributed File System Client Screen")
-    filesystem.geometry("1300x900")
-    font1 = ('times', 13, 'bold')
+# ========= Buttons ===============
+SignUp_button = Button(LoginPage, text='Sign up', font=("yu gothic ui bold", 12), bg='#f8f8f8', fg="#89898b",
+                       command=lambda: show_frame(RegistrationPage), borderwidth=0, activebackground='#1b87d2', cursor='hand2')
+SignUp_button.place(x=1100, y=175)
 
-    cd_button = tk.Button(filesystem, text="Create Directory", command=create_directory)
-    cd_button.place(x=50, y=100)
-    cd_button.config(font=font1)
+# ===== Welcome Label ==============
+welcome_label = Label(design_frame4, text='Welcome', font=('Arial', 20, 'bold'), bg='#f8f8f8')
+welcome_label.place(x=130, y=15)
 
-    cf_button = tk.Button(filesystem, text="Create File", command=create_file)
-    cf_button.place(x=300, y=100)
-    cf_button.config(font=font1)
+# ======= top Login Button =========
+login_button = Button(LoginPage, text='Login', font=("yu gothic ui bold", 12), bg='#f8f8f8', fg="#89898b",
+                      borderwidth=0, activebackground='#1b87d2', cursor='hand2')
+login_button.place(x=845, y=175)
 
-    cfButton = Button(filesystem, text="Upload File", command=upload_file)
-    cfButton.place(x=500,y=100)
-    cfButton.config(font=font1)
+login_line = Canvas(LoginPage, width=60, height=5, bg='#1b87d2')
+login_line.place(x=840, y=203)
 
-    filecombo = ttk.Combobox(filesystem, values=available_files)
-    filecombo.place(x=50, y=150)
-    filecombo.set(available_files[0] if available_files else "")
-    filecombo.config(font=font1)
-
-    df_button = tk.Button(filesystem, text="Delete File", command=delete_file)
-    df_button.place(x=300, y=150)
-    df_button.config(font=font1)
-
-    restore_button = tk.Button(filesystem, text="Restore File", command=recycle)
-    restore_button.place(x=500, y=150)
-    restore_button.config(font=font1)
-
-    rf_button = tk.Button(filesystem, text="Read File", command=read_files)
-    rf_button.place(x=50, y=200)
-    rf_button.config(font=font1)
-
-    wf_button = tk.Button(filesystem, text="Write File", command=write_file)
-    wf_button.place(x=300, y=200)
-    wf_button.config(font=font1)
-
-    ren_button = tk.Button(filesystem, text="Rename File", command=rename_file)
-    ren_button.place(x=50, y=250)
-    ren_button.config(font=font1)
-
-    sa_button = tk.Button(filesystem, text="Share Access", command=share_access)
-    sa_button.place(x=300, y=250)
-    sa_button.config(font=font1)
-
-    access_list = ttk.Combobox(filesystem, values=['Read', 'Write'])
-    access_list.place(x=450, y=250)
-    access_list.set('Read')
-    access_list.config(font=font1)
-
-    text = tk.Text(filesystem, height=15, width=120)
-    scroll = tk.Scrollbar(text)
-    text.configure(yscrollcommand=scroll.set)
-    text.place(x=10, y=300)
-    text.config(font=font1)
-
-    filesystem.config(bg='chocolate1')
-    filesystem.mainloop()
+# ==== LOGIN  down button ============
+loginBtn1 = Button(design_frame4, fg='#f8f8f8', text='Login', bg='#1b87d2', font=("yu gothic ui bold", 15),
+                   cursor='hand2', activebackground='#1b87d2', command=lambda:login())
+loginBtn1.place(x=133, y=340, width=256, height=50)
 
 
-# Global variables
-global login_user, login_pass, username, available_files
-available_files = []
+# ======= ICONS =================
+
+# ===== Name icon =========
+email_icon = pil_image.open('images\\name-icon.png')
+photo = pil_imageTk.PhotoImage(email_icon)
+emailIcon_label = Label(design_frame4, image=photo, bg='#f8f8f8')
+emailIcon_label.image = photo
+emailIcon_label.place(x=105, y=174)
+
+# ===== password icon =========
+password_icon = pil_image.open('images\\pass-icon.png')
+photo = pil_imageTk.PhotoImage(password_icon)
+password_icon_label = Label(design_frame4, image=photo, bg='#f8f8f8')
+password_icon_label.image = photo
+password_icon_label.place(x=105, y=254)
+
+# ===== picture icon =========
+picture_icon = pil_image.open('images\\pic-icon.png')
+photo = pil_imageTk.PhotoImage(picture_icon)
+picture_icon_label = Label(design_frame4, image=photo, bg='#f8f8f8')
+picture_icon_label.image = photo
+picture_icon_label.place(x=280, y=5)
+
+# ===== Left Side Picture ============
+side_image = pil_image.open('images\\vector.png')
+photo = pil_imageTk.PhotoImage(side_image)
+side_image_label = Label(design_frame3, image=photo, bg='#1e85d0')
+side_image_label.image = photo
+side_image_label.place(x=50, y=10)
 
 
-def signup_Action():
-    global sign_user, sign_password, contact, username, count, winsignup
-    user = sign_user.get()
-    password = sign_password.get()
-    contact_number = contact.get()
+
+def login():
+    global login_user, login_pass, active_user, file_library, winsignup
+    file_library = []
+    usr = email_entry.get()
+    password = password_entry1.get()
 
     output = "none"
-    con = pymysql.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
-    try:
-        con = pymysql.connect(
-            host='127.0.0.1',
-            port=3306,
-            user='root',
-            password='Sathvik@007',
-            database='distributed',
-            charset='utf8'
-        )
+    con = db_connector.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
+    with con:
+        cur = con.cursor()
+        cur.execute("select username, password FROM register")
+        rows = cur.fetchall()
+        for row in rows:
+            if row[0] == usr and row[1] == password:
+                output = "success"
+                active_user = usr
+                readFiles()
+                break
+    if output == "success":
+        tk_messagebox.showinfo("Success", 'Logged in Successfully.')
+        main_interface.destroy()
+        fileManagementSystem()
+    else:
+        tk_messagebox.showerror("Failed", "Wrong Login details, please try again.")
+    
+
+
+
+def forgot_password():
+    win = Toplevel()
+    window_width = 350
+    window_height = 350
+    screen_width = win.winfo_screenwidth()
+    screen_height = win.winfo_screenheight()
+    position_top = int(screen_height / 4 - window_height / 4)
+    position_right = int(screen_width / 2 - window_width / 2)
+    win.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    win.title('Forgot Password')
+    win.iconbitmap('images\\aa.ico')
+    win.configure(background='#f8f8f8')
+    win.resizable(0, 0)
+
+    # Variables
+    username = StringVar()
+    password = StringVar()
+    confirmPassword = StringVar()
+
+    # ====== Username ====================
+    email_entry2 = Entry(win, fg="#a7a7a7", font=("yu gothic ui semibold", 12), highlightthickness=2,
+                         textvariable=username)
+    email_entry2.place(x=40, y=30, width=256, height=34)
+    email_entry2.config(highlightbackground="black", highlightcolor="black")
+    email_label2 = Label(win, text='• Email account', fg="#89898b", bg='#f8f8f8',
+                         font=("yu gothic ui", 11, 'bold'))
+    email_label2.place(x=40, y=0)
+
+    # ====  New Password ==================
+    new_password_entry = Entry(win, fg="#a7a7a7", font=("yu gothic ui semibold", 12), show='•', highlightthickness=2,
+                               textvariable=password)
+    new_password_entry.place(x=40, y=110, width=256, height=34)
+    new_password_entry.config(highlightbackground="black", highlightcolor="black")
+    new_password_label = Label(win, text='• New Password', fg="#89898b", bg='#f8f8f8', font=("yu gothic ui", 11, 'bold'))
+    new_password_label.place(x=40, y=80)
+
+    # ====  Confirm Password ==================
+    confirm_password_entry = Entry(win, fg="#a7a7a7", font=("yu gothic ui semibold", 12), show='•', highlightthickness=2
+                                   , textvariable=confirmPassword)
+    confirm_password_entry.place(x=40, y=190, width=256, height=34)
+    confirm_password_entry.config(highlightbackground="black", highlightcolor="black")
+    confirm_password_label = Label(win, text='• Confirm Password', fg="#89898b", bg='#f8f8f8',
+                                   font=("yu gothic ui", 11, 'bold'))
+    confirm_password_label.place(x=40, y=160)
+
+    # ======= Update password Button ============
+    update_pass = Button(win, fg='#f8f8f8', text='Update Password', bg='#1b87d2', font=("yu gothic ui bold", 14),
+                         cursor='hand2', activebackground='#1b87d2', command=lambda: change_password())
+    update_pass.place(x=40, y=240, width=256, height=50)
+
+    # ========= DATABASE CONNECTION FOR FORGOT PASSWORD=====================
+    def change_password():
+
+        if new_password_entry.get() == confirm_password_entry.get():
+            con1 = db_connector.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
+            with con1:
+                cur = con1.cursor()
+                query = "update register set password = %s where username = %s "
+                cur.execute(query, (new_password_entry.get(),email_entry2.get()))
+
+                
+                con1.commit()
+                con1.close()
+                tk_messagebox.showinfo('Congrats', 'Password changed successfully')
+
+        else:
+            tk_messagebox.showerror('Error!', "Passwords didn't match")
+
+
+forgotPassword = Button(design_frame4, text='Forgot password', font=("yu gothic ui", 8, "bold underline"), bg='#f8f8f8',
+                        borderwidth=0, activebackground='#f8f8f8', command=lambda: forgot_password(), cursor="hand2")
+forgotPassword.place(x=290, y=290)
+
+
+
+design_frame5 = Listbox(RegistrationPage, bg='#0c71b9', width=115, height=50, highlightthickness=0, borderwidth=0)
+design_frame5.place(x=0, y=0)
+
+design_frame6 = Listbox(RegistrationPage, bg='#1e85d0', width=115, height=50, highlightthickness=0, borderwidth=0)
+design_frame6.place(x=676, y=0)
+
+design_frame7 = Listbox(RegistrationPage, bg='#1e85d0', width=100, height=33, highlightthickness=0, borderwidth=0)
+design_frame7.place(x=75, y=106)
+
+design_frame8 = Listbox(RegistrationPage, bg='#f8f8f8', width=100, height=33, highlightthickness=0, borderwidth=0)
+design_frame8.place(x=676, y=106)
+
+# ==== Username =======
+name_entry = Entry(design_frame8, fg="#a7a7a7", font=("yu gothic ui semibold", 12), highlightthickness=2,
+                   textvariable=FullName)
+name_entry.place(x=284, y=150, width=286, height=34)
+name_entry.config(highlightbackground="black", highlightcolor="black")
+name_label = Label(design_frame8, text='•Username', fg="#89898b", bg='#f8f8f8', font=("yu gothic ui", 11, 'bold'))
+name_label.place(x=280, y=120)
+
+# ======= Email ===========
+email_entry = Entry(design_frame8, fg="#a7a7a7", font=("yu gothic ui semibold", 12), highlightthickness=2,
+                    textvariable=Email)
+email_entry.place(x=284, y=220, width=286, height=34)
+email_entry.config(highlightbackground="black", highlightcolor="black")
+email_label = Label(design_frame8, text='•Email', fg="#89898b", bg='#f8f8f8', font=("yu gothic ui", 11, 'bold'))
+email_label.place(x=280, y=190)
+
+# ====== Password =========
+password_entry = Entry(design_frame8, fg="#a7a7a7", font=("yu gothic ui semibold", 12), show='•', highlightthickness=2,
+                       textvariable=Password)
+password_entry.place(x=284, y=295, width=286, height=34)
+password_entry.config(highlightbackground="black", highlightcolor="black")
+password_label = Label(design_frame8, text='• Password', fg="#89898b", bg='#f8f8f8',
+                       font=("yu gothic ui", 11, 'bold'))
+password_label.place(x=280, y=265)
+
+
+def password_command2():
+    if password_entry.cget('show') == '•':
+        password_entry.config(show='')
+    else:
+        password_entry.config(show='•')
+
+
+checkButton = Checkbutton(design_frame8, bg='#f8f8f8', command=password_command2, text='show password')
+checkButton.place(x=290, y=330)
+
+
+# ====== Confirm Password =============
+confirmPassword_entry = Entry(design_frame8, fg="#a7a7a7", font=("yu gothic ui semibold", 12), highlightthickness=2,
+                              textvariable=ConfirmPassword)
+confirmPassword_entry.place(x=284, y=385, width=286, height=34)
+confirmPassword_entry.config(highlightbackground="black", highlightcolor="black")
+confirmPassword_label = Label(design_frame8, text='• Confirm Password', fg="#89898b", bg='#f8f8f8',
+                              font=("yu gothic ui", 11, 'bold'))
+confirmPassword_label.place(x=280, y=355)
+
+# ========= Buttons ====================
+SignUp_button = Button(RegistrationPage, text='Sign up', font=("yu gothic ui bold", 12), bg='#f8f8f8', fg="#89898b",
+                       command=lambda: show_frame(LoginPage), borderwidth=0, activebackground='#1b87d2', cursor='hand2')
+SignUp_button.place(x=1100, y=175)
+
+SignUp_line = Canvas(RegistrationPage, width=60, height=5, bg='#1b87d2')
+SignUp_line.place(x=1100, y=203)
+
+# ===== Welcome Label ==================
+welcome_label = Label(design_frame8, text='Welcome', font=('Arial', 20, 'bold'), bg='#f8f8f8')
+welcome_label.place(x=130, y=15)
+
+# ========= Login Button =========
+login_button = Button(RegistrationPage, text='Login', font=("yu gothic ui bold", 12), bg='#f8f8f8', fg="#89898b",
+                      borderwidth=0, activebackground='#1b87d2', command=lambda: show_frame(LoginPage), cursor='hand2')
+login_button.place(x=845, y=175)
+
+# ==== SIGN UP down button ============
+signUp2 = Button(design_frame8, fg='#f8f8f8', text='Sign Up', bg='#1b87d2', font=("yu gothic ui bold", 15),
+                 cursor='hand2', activebackground='#1b87d2', command=lambda: submit())
+signUp2.place(x=285, y=435, width=286, height=50)
+
+# ===== password icon =========
+password_icon = pil_image.open('images\\pass-icon.png')
+photo = pil_imageTk.PhotoImage(password_icon)
+password_icon_label = Label(design_frame8, image=photo, bg='#f8f8f8')
+password_icon_label.image = photo
+password_icon_label.place(x=255, y=300)
+
+# ===== confirm password icon =========
+confirmPassword_icon = pil_image.open('images\\pass-icon.png')
+photo = pil_imageTk.PhotoImage(confirmPassword_icon)
+confirmPassword_icon_label = Label(design_frame8, image=photo, bg='#f8f8f8')
+confirmPassword_icon_label.image = photo
+confirmPassword_icon_label.place(x=255, y=390)
+
+# ===== Username =========
+email_icon = pil_image.open('images\\name-icon.png')
+photo = pil_imageTk.PhotoImage(email_icon)
+emailIcon_label = Label(design_frame8, image=photo, bg='#f8f8f8')
+emailIcon_label.image = photo
+emailIcon_label.place(x=255, y=225)
+
+# ===== Full Name icon =========
+name_icon = pil_image.open('images\\name-icon.png')
+photo = pil_imageTk.PhotoImage(name_icon)
+nameIcon_label = Label(design_frame8, image=photo, bg='#f8f8f8')
+nameIcon_label.image = photo
+nameIcon_label.place(x=252, y=153)
+
+# ===== picture icon =========
+picture_icon = pil_image.open('images\\pic-icon.png')
+photo = pil_imageTk.PhotoImage(picture_icon)
+picture_icon_label = Label(design_frame8, image=photo, bg='#f8f8f8')
+picture_icon_label.image = photo
+picture_icon_label.place(x=280, y=5)
+
+# ===== Left Side Picture ============
+side_image = pil_image.open('images\\vector.png')
+photo = pil_imageTk.PhotoImage(side_image)
+side_image_label = Label(design_frame7, image=photo, bg='#1e85d0')
+side_image_label.image = photo
+side_image_label.place(x=50, y=10)
+
+def submit():
+    check_counter = 0
+    warn = ""
+    if name_entry.get() == "":
+        warn = "Full Name can't be empty"
+    else:
+        check_counter += 1
+
+    if email_entry.get() == "":
+        warn = "Email Field can't be empty"
+    else:
+        check_counter += 1
+
+    if password_entry.get() == "":
+        warn = "Password can't be empty"
+    else:
+        check_counter += 1
+
+    if confirmPassword_entry.get() == "":
+        warn = "Sorry, can't sign up make sure all fields are complete"
+    else:
+        check_counter += 1
+
+    if password_entry.get() != confirmPassword_entry.get():
+        warn = "Passwords didn't match!"
+    else:
+        check_counter += 1
+
+    if check_counter == 5:
+        global sign_user, sign_pass, contact, active_user, count, winsignup
+        usr = name_entry.get()
+        password = password_entry.get()
+        contactno = email_entry.get()
+
+        output = "none"
+        con = db_connector.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
         with con:
             cur = con.cursor()
-            cur.execute("SELECT username FROM register")
+            cur.execute("select username FROM register")
             rows = cur.fetchall()
             for row in rows:
-                if row[0] == user:
-                    output = user + " Username already exists"
-                    break
+                if row[0] == usr:
+                    output = active_user+" Username already exists"
+                    break                
             if output == "none":
-                # No need to create a separate connection and cursor again
-                student_sql_query = f"INSERT INTO register(username, password, contact) VALUES('{user}', '{password}', '{contact_number}')"
-                cur.execute(student_sql_query)
-                con.commit()
-
-                if cur.rowcount == 1:
-                    output = "Signup process completed. You can log in now"
+                db_connection = db_connector.connect(host='127.0.0.1',port = 3306,user = 'root', password = 'Sathvik@007', database = 'distributed',charset='utf8')
+                db_cursor = db_connection.cursor()
+                student_sql_query = "INSERT INTO register(username,password,contact) VALUES('"+usr+"','"+password+"','"+contactno+"')"
+                db_cursor.execute(student_sql_query)
+                db_connection.commit()
+                print(db_cursor.rowcount, "Record Inserted")
+                if db_cursor.rowcount == 1:
+                    output = "Signup process completed. You can login now"
                     count = 2
-                    messagebox.showinfo("Success", output)
+                    tk_messagebox.showinfo(output,output)
                     winsignup.destroy()
-                    login_Function()
-    except pymysql.Error as e:
-        messagebox.showerror("Error", f"Database error: {e}")
-    finally:
-        # Close the connection outside the try-except block
-        if con:
-            con.close()
-
-    # Move the messagebox.showinfo outside the with block
-    if output != "none":
-        messagebox.showinfo("Info", output)
-
-def login_Function():
-    global login_user, login_pass, count, winlogin
-    if count == 0:
-        main.destroy()
-        count = 1
-    winlogin = tkinter.Tk()
-    winlogin.title("User Login Screen")
-    winlogin.maxsize(width=500, height=300)
-    winlogin.minsize(width=500, height=300)
-
-    l1 = Label(winlogin, text='Login Screen')
-    l1.config(font=font1)
-    l1.place(x=140,y=30)
-
-    l2 = Label(winlogin, text='Username')
-    l2.config(font=font1)
-    l2.place(x=50,y=80)
-
-    login_user = Entry(winlogin,width=35)
-    login_user.config(font=font1)
-    login_user.place(x=150,y=80)
-
-    l3 = Label(winlogin, text='Password')
-    l3.config(font=font1)
-    l3.place(x=50,y=130)
-
-    login_pass = Entry(winlogin,width=35, show="*")
-    login_pass.config(font=font1)
-    login_pass.place(x=150,y=130)
-
-    login1Button = Button(winlogin, text="Submit", command=validate_login)
-    login1Button.place(x=100,y=180)
-    login1Button.config(font=font1)
-
-    winlogin.mainloop()
-
-def validate_login():
-    True
+                    login()
+            else:
+                tk_messagebox.showinfo(output,output)
 
 
-font1 = ('times', 12, 'bold')
+main_interface.mainloop()
 
 
-root = tk.Tk()
-root.title("P2P File System")
+# def benchmark():
+#     start_time = time.time_ns()
 
-main_frame = ttk.Frame(root, padding="10")
-main_frame.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
+#     for i in range(100):
+#         readFile('Vishwa','V_a','V6.txt','C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/Vishwa/V_a/V6.txt')
+    
+#     elapsed_time = time.time_ns() - start_time
 
-# Add File Button
-add_button = ttk.Button(main_frame, text="Add File", command=add_file)
-add_button.grid(column=1, row=1, sticky=tk.W)
+#     print(str(elapsed_time) + "nano seconds")
 
-# Delete File Button
-delete_button = ttk.Button(main_frame, text="Delete File", command=delete_file)
-delete_button.grid(column=2, row=1, sticky=tk.W)
 
-# Write File Button
-write_button = ttk.Button(main_frame, text="Write File", command=write_file)
-write_button.grid(column=3, row=1, sticky=tk.W)
-
-# Status Label
-status_label = ttk.Label(main_frame, text="")
-status_label.grid(column=1, row=2, columnspan=3, sticky=(tk.W, tk.E))
-
-# File List
-file_list = ttk.Treeview(main_frame, columns=("Filename"))
-file_list.heading("#1", text="Filename")
-file_list.grid(column=1, row=3, columnspan=3, sticky=(tk.W, tk.E))
-file_list.column("#1", width=200)
-
-update_file_list()
-
-root.mainloop()
+# benchmark()
