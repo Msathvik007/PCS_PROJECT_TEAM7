@@ -254,7 +254,46 @@ def editFileContent():
         record_file_write(active_user, file_name, user_permission)
 
 def restoreFileFromRecycleBin():
-    pass
+    global active_user, display_text, permission_options
+    global directory_name
+    directory_name = tk_simpledialog.askstring(title="Enter Directory Name for Restore", prompt="Enter Directory Name")
+    dir_to_restore = directory_name
+    file_to_restore = tk_simpledialog.askstring(title="Enter File Name for Restore", prompt="Enter File Name to Restore")
+    file_label = file_to_restore
+    restore_target_path = main_path + active_user + "/" + directory_name + "/" + file_to_restore
+    original_file_path = 'C:/Users/Chaimama/Desktop/Pcs_Project/cmsc626distributed-file-system-main/Recycle/' + file_to_restore
+    try:
+        file_shutil.move(original_file_path, restore_target_path)
+        print(f"Successfully moved file from {original_file_path} to {restore_target_path}")
+    except Exception as move_error:
+        print(f"Error: {move_error}")
+    directory_name = encrypt_data(directory_name)
+    directory_name = str(base64_lib.b64encode(directory_name), 'utf-8')
+    file_name_encoded = encrypt_data(file_to_restore)
+    file_name_encoded = str(base64_lib.b64encode(file_name_encoded), 'utf-8')
+    server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+    server_socket.connect(('localhost', 2778))
+    file_info = []
+    file_info.append("recycle")
+    file_info.append(active_user)
+    file_info.append(directory_name)
+    file_info.append(file_name_encoded)
+    file_info = data_pickle.dumps(file_info)
+    server_socket.send(file_info)
+    response = server_socket.recv(100)
+    response = response.decode()
+    file_library.append(restore_target_path)
+    db_connection = db_connector.connect(host='127.0.0.1', port=3306, user='root', password='Sathvik@007', database='distributed', charset='utf8')
+    db_cursor = db_connection.cursor()
+    file_insert_query = "INSERT INTO all_files(owner, file) VALUES('" + active_user + "','" + main_path + active_user + "/" + dir_to_restore + "/" + file_label + "')"
+    db_cursor.execute(file_insert_query)
+    db_connection.commit()
+    server_socket = net_socket.socket(net_socket.AF_INET, net_socket.SOCK_STREAM)
+    server_socket.connect(('localhost', 2227))
+    server_socket.send(file_info)
+    response = server_socket.recv(100)
+    response = response.decode()
+    display_text.insert(END, response + "\n")
     
 def allocateFileAccess():
     pass
