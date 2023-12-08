@@ -50,14 +50,15 @@ The Peer-to-peer Encrypted File System offers a robust and secure solution for u
 
 # Implementation
 
- Markup : 1. Connect to mysql database and create tables as given in database.txt
-          2. Check the port number and ip address so that it matches with the mySQL server
-          3. In both the server codes there is a global variable path assign with the path where you want to store the files and directories.
-          4. Similarly change the path in client.py which takes the name main_path.
-          5. In the client.py the path is split and stored in path_elemets and these elements are assigned to different variables based on array indexes so, do check the indexes in order to run the code properly
-          6. Now, Run server.py file #Server1 gets started
-          7. Run server2.py #Server 2 gets started
-          8. Run client.py
+ 1. Connect to mysql database and create tables as given in database.txt
+ 2. Check the port number and ip address so that it matches with the mySQL server
+ 3. In both the server codes there is a global variable path assign with the path where you want to store the files and directories.
+ 4. Similarly change the path in client.py which takes the name main_path.
+ 5. In the client.py the path is split and stored in path_elemets and these elements are assigned to different variables based on array   
+    indexes so, do check the indexes in order to run the code properly
+ 6. Now, Run server.py file #Server1 gets started
+ 7. Run server2.py #Server 2 gets started
+ 8. Run client.py
 
 After successfully running client.py a GUI interface is opened where you can login or signup and after logging in a new window is opened where all the operations can be perfomed.
 
